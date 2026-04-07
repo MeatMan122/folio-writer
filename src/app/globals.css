@@ -1,26 +1,228 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #e8dccc;
+  --foreground: #241f1a;
+  --color-ink: #241f1a;
+  --color-paper: #fffaf4;
+  --color-accent: #bd682e;
+  --font-editor-sans: var(--font-ui);
+  --font-editor-serif: var(--font-serif);
+  --font-editor-mono: var(--font-mono-ui);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-ui);
+  --font-mono: var(--font-mono-ui);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-ui), sans-serif;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+.toolbar-scroller {
+  overflow: visible;
+}
+
+.markdown-panel::-webkit-scrollbar {
+  height: 10px;
+  width: 10px;
+}
+
+.markdown-panel::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(36, 31, 26, 0.15);
+}
+
+.folio-editor {
+  color: var(--color-ink);
+  font-family: var(--font-editor-sans), sans-serif;
+}
+
+.folio-editor > *:first-child {
+  margin-top: 0;
+}
+
+.folio-editor p {
+  margin: 0 0 1.1rem;
+  font-size: 1rem;
+  line-height: 1.85;
+}
+
+.folio-editor h1,
+.folio-editor h2,
+.folio-editor h3 {
+  margin: 1.6rem 0 0.9rem;
+  line-height: 1.15;
+  color: #201914;
+}
+
+.folio-editor h1 {
+  font-family: var(--font-editor-serif), serif;
+  font-size: clamp(2rem, 3vw, 2.8rem);
+  letter-spacing: -0.05em;
+}
+
+.folio-editor h2 {
+  font-size: 1.55rem;
+  font-weight: 700;
+}
+
+.folio-editor h3 {
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.folio-editor ul,
+.folio-editor ol {
+  margin: 0 0 1.2rem 1.3rem;
+  padding: 0;
+}
+
+.folio-editor li {
+  margin: 0.3rem 0;
+}
+
+.folio-editor blockquote {
+  margin: 0 0 1.2rem;
+  border-left: 3px solid rgba(189, 104, 46, 0.55);
+  padding-left: 1rem;
+  color: rgba(36, 31, 26, 0.68);
+}
+
+.folio-editor pre {
+  margin: 0 0 1.25rem;
+  overflow-x: auto;
+  border-left: 3px solid rgba(189, 104, 46, 0.35);
+  border-radius: 1.2rem;
+  background: #f3ece3;
+  padding: 1rem 1.1rem;
+  font-family: var(--font-editor-mono), monospace;
+  font-size: 0.92rem;
+  line-height: 1.6;
+}
+
+.folio-editor code {
+  border-radius: 0.5rem;
+  background: rgba(36, 31, 26, 0.06);
+  padding: 0.1rem 0.32rem;
+  font-family: var(--font-editor-mono), monospace;
+  font-size: 0.88em;
+}
+
+.folio-editor pre code {
+  background: transparent;
+  padding: 0;
+}
+
+.folio-editor a {
+  color: #1d4ed8;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+
+.folio-editor img {
+  margin: 1.4rem auto;
+  max-width: 100%;
+  border-radius: 1.2rem;
+  box-shadow: 0 18px 50px rgba(53, 38, 22, 0.15);
+}
+
+.folio-editor table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0 0 1.4rem;
+  overflow: hidden;
+  border-radius: 1rem;
+}
+
+.folio-editor th,
+.folio-editor td {
+  border: 1px solid rgba(36, 31, 26, 0.08);
+  padding: 0.7rem 0.8rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.folio-editor th {
+  background: rgba(189, 104, 46, 0.12);
+  font-weight: 700;
+}
+
+.folio-editor hr {
+  margin: 1.5rem 0;
+  border: none;
+  border-top: 1px solid rgba(36, 31, 26, 0.14);
+}
+
+.folio-editor .is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  color: rgba(36, 31, 26, 0.35);
+  pointer-events: none;
+}
+
+.folio-editor .ProseMirror-selectednode {
+  outline: 2px solid rgba(189, 104, 46, 0.34);
+  outline-offset: 4px;
+}
+
+.command-menu {
+  width: 320px;
+  border: 1px solid rgba(36, 31, 26, 0.08);
+  border-radius: 1.4rem;
+  background: rgba(255, 250, 244, 0.98);
+  padding: 0.75rem;
+  box-shadow: 0 25px 70px rgba(41, 27, 15, 0.15);
+  backdrop-filter: blur(14px);
+}
+
+.tippy-box {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+@media (max-width: 1024px) {
+  .folio-editor {
+    min-height: 680px;
+  }
+}
+
+@media print {
+  header,
+  aside,
+  footer,
+  .toolbar-scroller,
+  .command-menu {
+    display: none !important;
+  }
+
+  body {
+    background: white;
+  }
+
+  .folio-editor {
+    min-height: auto;
+  }
 }

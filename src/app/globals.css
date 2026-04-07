@@ -54,8 +54,43 @@ textarea {
 }
 
 .folio-editor {
+  --editor-page-width: 816px;
+  --editor-page-height: 1056px;
+  --editor-page-gap: 64px;
+  --editor-page-padding-x: 76px;
+  --editor-page-padding-y: 72px;
+  width: min(100%, var(--editor-page-width));
+  min-height: var(--editor-page-height);
+  margin: 0 auto;
+  padding: var(--editor-page-padding-y) var(--editor-page-padding-x);
   color: var(--color-ink);
   font-family: var(--font-editor-sans), sans-serif;
+  caret-color: var(--color-accent);
+  background-image: linear-gradient(
+    to bottom,
+    rgba(255, 250, 244, 0.98) 0,
+    rgba(255, 250, 244, 0.98) var(--editor-page-height),
+    transparent var(--editor-page-height),
+    transparent calc(var(--editor-page-height) + var(--editor-page-gap))
+  );
+  background-position: center top;
+  background-repeat: repeat-y;
+  background-size: 100% calc(var(--editor-page-height) + var(--editor-page-gap));
+}
+
+.pagination-gap {
+  position: relative;
+  height: calc((var(--editor-page-padding-y) * 2) + var(--editor-page-gap));
+  pointer-events: none;
+}
+
+.pagination-gap::before {
+  content: "";
+  position: absolute;
+  left: calc((var(--editor-page-padding-x) * -1) + 24px);
+  right: calc((var(--editor-page-padding-x) * -1) + 24px);
+  top: 50%;
+  border-top: 1px dashed rgba(36, 31, 26, 0.12);
 }
 
 .folio-editor > *:first-child {
@@ -205,7 +240,17 @@ textarea {
 
 @media (max-width: 1024px) {
   .folio-editor {
-    min-height: 680px;
+    --editor-page-padding-x: 44px;
+    --editor-page-padding-y: 52px;
+    --editor-page-gap: 48px;
+  }
+}
+
+@media (max-width: 640px) {
+  .folio-editor {
+    --editor-page-padding-x: 24px;
+    --editor-page-padding-y: 32px;
+    --editor-page-gap: 32px;
   }
 }
 
@@ -223,6 +268,19 @@ textarea {
   }
 
   .folio-editor {
+    width: 100%;
     min-height: auto;
+    padding: 0;
+    background: transparent;
+  }
+
+  .pagination-gap {
+    break-before: page;
+    page-break-before: always;
+    height: 0;
+  }
+
+  .pagination-gap::before {
+    display: none;
   }
 }

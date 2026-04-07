@@ -7,6 +7,7 @@ import {
   HeadingLevel,
   ImageRun,
   Packer,
+  PageBreak,
   Paragraph,
   ShadingType,
   Table,
@@ -28,6 +29,7 @@ import {
   type ImageBlock,
   type InlineNode,
 } from "@/lib/export/model";
+import { calculatePaginationBreaksByEstimate } from "@/lib/pagination";
 
 function mapAlignment(value?: string) {
   if (value === "center") {
@@ -412,7 +414,21 @@ async function blockToDocxChildren(block: BlockNode, depth = 0): Promise<Array<P
 
 export async function createDocxBuffer(title: string, content: JSONContent) {
   const normalized = normalizeDocument(content);
-  const children = await Promise.all(normalized.map((block) => blockToDocxChildren(block)));
+  const breaks = new Set(calculatePaginationBreaksByEstimate(normalized));
+  const children: Array<Paragraph | Table> = [];
+
+  for (const [index, block] of normalized.entries()) {
+    if (breaks.has(index)) {
+      children.push(
+        new Paragraph({
+          children: [new PageBreak()],
+        }),
+      );
+    }
+
+    children.push(...(await blockToDocxChildren(block)));
+  }
+
   const document = new Document({
     creator: "Folio Writer",
     title,
@@ -429,7 +445,7 @@ export async function createDocxBuffer(title: string, content: JSONContent) {
             },
           },
         },
-        children: children.flat(),
+        children,
       },
     ],
   });

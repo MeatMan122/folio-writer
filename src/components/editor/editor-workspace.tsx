@@ -66,6 +66,11 @@ import { common, createLowlight } from "lowlight";
 
 import { cloneTemplateContent, createStoredDocument, editorTemplates, getTemplateById } from "@/lib/editor/templates";
 import { FontSize } from "@/lib/editor/extensions/font-size";
+import {
+  getPaginationBreaks,
+  Pagination,
+  setPaginationBreaks,
+} from "@/lib/editor/extensions/pagination";
 import { SlashCommand } from "@/lib/editor/extensions/slash-command";
 import {
   FONT_FAMILY_OPTIONS,
@@ -83,7 +88,12 @@ import {
   sanitizeFileName,
 } from "@/lib/editor/utils";
 import { serializeDocumentToMarkdown } from "@/lib/export/markdown";
-import { buildDocumentStats, extractOutline } from "@/lib/export/model";
+import { buildDocumentStats, extractOutline, normalizeDocument } from "@/lib/export/model";
+import {
+  calculatePaginationBreaksByEstimate,
+  calculatePaginationBreaksFromHeights,
+  EDITOR_PAGE_CONTENT_HEIGHT_PX,
+} from "@/lib/pagination";
 
 const lowlight = createLowlight(common);
 
@@ -258,6 +268,14 @@ function createSlashItems(): SlashCommandItem[] {
   ];
 }
 
+function haveSameValues(left: number[], right: number[]) {
+  if (left.length !== right.length) {
+    return false;
+  }
+
+  return left.every((value, index) => value === right[index]);
+}
+
 export function EditorWorkspace() {
   const imageInputId = useId();
   const imageInputRef = useRef<HTMLInputElement | null>(null);
@@ -270,6 +288,7 @@ export function EditorWorkspace() {
   const [status, setStatus] = useState("Local autosave is active.");
   const [viewportWidth, setViewportWidth] = useState(1440);
   const [isMoreOpen, setIsMoreOpen] = useState(false);
+  const [pageCount, setPageCount] = useState(1);
   const deferredContent = useDeferredValue(documentState.content);
   const markdown = serializeDocumentToMarkdown(deferredContent);
   const stats = buildDocumentStats(deferredContent);
@@ -338,6 +357,7 @@ export function EditorWorkspace() {
         Image.configure({ allowBase64: true }),
         HorizontalRule,
         CharacterCount,
+        Pagination,
         SlashCommand.configure({
           items: (query) =>
             createSlashItems().filter((item) =>
@@ -348,7 +368,7 @@ export function EditorWorkspace() {
       content: documentState.content,
       editorProps: {
         attributes: {
-          class: "folio-editor prose-editor min-h-[900px] focus:outline-none",
+          class: "folio-editor prose-editor focus:outline-none",
           spellcheck: "true",
         },
         handlePaste: (_view, event) => {
@@ -398,6 +418,77 @@ export function EditorWorkspace() {
     editor.commands.setContent(restored.content, { emitUpdate: false });
     setReady(true);
     setStatus("Local draft restored.");
+  }, [editor, ready]);
+
+  useEffect(() => {
+    if (!editor || !ready) {
+      return;
+    }
+
+    const instance = editor;
+    const editorRoot = instance.view.dom as HTMLElement;
+    let frame = 0;
+
+    function getRenderableBlocks() {
+      return Array.from(editorRoot.children).filter(
+        (child): child is HTMLElement => child instanceof HTMLElement && child.dataset.paginationGap !== "true",
+      );
+    }
+
+    function measureBlockHeights(elements: HTMLElement[]) {
+      return elements.map((element, index) => {
+        const next = elements[index + 1];
+
+        if (next) {
+          return next.offsetTop - element.offsetTop;
+        }
+
+        const styles = window.getComputedStyle(element);
+        const marginBottom = Number.parseFloat(styles.marginBottom) || 0;
+        return element.offsetHeight + marginBottom;
+      });
+    }
+
+    function syncPagination() {
+      frame = 0;
+
+      const normalizedBlocks = normalizeDocument(instance.getJSON());
+      const elements = getRenderableBlocks();
+      const measuredBreaks =
+        elements.length === instance.state.doc.childCount && elements.length === normalizedBlocks.length
+          ? calculatePaginationBreaksFromHeights(measureBlockHeights(elements), EDITOR_PAGE_CONTENT_HEIGHT_PX)
+          : null;
+      const nextBreaks = measuredBreaks ?? calculatePaginationBreaksByEstimate(normalizedBlocks, EDITOR_PAGE_CONTENT_HEIGHT_PX);
+      const currentBreaks = getPaginationBreaks(instance.state);
+
+      if (!haveSameValues(currentBreaks, nextBreaks)) {
+        setPaginationBreaks(instance.view, nextBreaks);
+      }
+
+      setPageCount(nextBreaks.length + 1);
+    }
+
+    function schedulePagination() {
+      if (frame) {
+        return;
+      }
+
+      frame = window.requestAnimationFrame(syncPagination);
+    }
+
+    const resizeObserver = new ResizeObserver(schedulePagination);
+    resizeObserver.observe(editorRoot);
+    instance.on("update", schedulePagination);
+    schedulePagination();
+
+    return () => {
+      if (frame) {
+        window.cancelAnimationFrame(frame);
+      }
+
+      resizeObserver.disconnect();
+      instance.off("update", schedulePagination);
+    };
   }, [editor, ready]);
 
   useEffect(() => {
@@ -943,7 +1034,7 @@ export function EditorWorkspace() {
             <div className="flex-1 overflow-auto px-4 py-5 md:px-6">
               <div className="mx-auto max-w-[960px]">
                 <div className="mb-4 flex items-center justify-between rounded-full border border-[color:rgba(36,31,26,0.08)] bg-white/60 px-4 py-2 text-xs uppercase tracking-[0.24em] text-[color:rgba(36,31,26,0.42)]">
-                  <span>Letter Page</span>
+                  <span>{pageCount} {pageCount === 1 ? "Page" : "Pages"}</span>
                   <span>Spellcheck On</span>
                   <span>Press / for Blocks</span>
                 </div>
@@ -951,7 +1042,7 @@ export function EditorWorkspace() {
                   initial={{ opacity: 0, scale: 0.985 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: 0.12, duration: 0.35 }}
-                  className="rounded-[30px] border border-[color:rgba(36,31,26,0.08)] bg-[var(--color-paper)] px-6 py-7 shadow-[0_35px_120px_rgba(78,57,37,0.12)] md:px-10 md:py-10"
+                  className="rounded-[34px] border border-[color:rgba(36,31,26,0.08)] bg-[color:rgba(255,250,244,0.44)] px-4 py-5 shadow-[0_35px_120px_rgba(78,57,37,0.12)] md:px-5 md:py-6"
                 >
                   <div className="mb-8 flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.28em] text-[color:rgba(36,31,26,0.38)]">
                     <Type className="h-4 w-4" />

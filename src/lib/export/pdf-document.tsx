@@ -19,6 +19,11 @@ import {
   type BlockNode,
   type InlineNode,
 } from "@/lib/export/model";
+import {
+  calculatePaginationBreaksByEstimate,
+  PDF_TITLE_RESERVE_PX,
+  splitBlocksIntoPages,
+} from "@/lib/pagination";
 
 const styles = StyleSheet.create({
   page: {
@@ -389,17 +394,23 @@ function renderBlocks(blocks: BlockNode[], depth = 0): ReactNode[] {
 
 function ExportedPdf({ title, content }: { title: string; content: JSONContent }) {
   const blocks = normalizeDocument(content);
+  const pages = splitBlocksIntoPages(
+    blocks,
+    calculatePaginationBreaksByEstimate(blocks, undefined, PDF_TITLE_RESERVE_PX),
+  );
 
   return (
     <Document title={title}>
-      <Page size="LETTER" style={styles.page}>
-        <Text style={styles.title}>{title}</Text>
-        {renderBlocks(blocks)}
-        <View style={styles.footer} fixed>
-          <Text>Exported from Folio Writer</Text>
-          <Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
-        </View>
-      </Page>
+      {pages.map((pageBlocks, index) => (
+        <Page key={`page-${index + 1}`} size="LETTER" style={styles.page}>
+          {index === 0 ? <Text style={styles.title}>{title}</Text> : null}
+          {renderBlocks(pageBlocks)}
+          <View style={styles.footer} fixed>
+            <Text>Exported from Folio Writer</Text>
+            <Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
+          </View>
+        </Page>
+      ))}
     </Document>
   );
 }

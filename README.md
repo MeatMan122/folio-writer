@@ -6,7 +6,7 @@ Folio Writer is a web-based Microsoft Word style editor built with Next.js, Reac
 
 ## Live Preview
 
-- Vercel preview: [https://skill-deploy-mgq84nbtnb-codex-agent-deploys.vercel.app](https://skill-deploy-mgq84nbtnb-codex-agent-deploys.vercel.app)
+- Vercel preview: [https://folio-writer.vercel.app/](https://folio-writer.vercel.app/)
 
 ## Features
 

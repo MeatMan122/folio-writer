@@ -2,6 +2,7 @@
 
 Folio Writer is a web-based Microsoft Word style editor built with Next.js, React, and Tiptap. It ships with a rich WYSIWYG writing surface, local autosave, Markdown export, and server-backed PDF and DOCX export routes for web deployment.
 
+<img width="1631" height="941" alt="image" src="https://github.com/user-attachments/assets/c7e2d4b4-7829-4674-96b2-c994b32ac009" />
 ## Live Preview
 
 - Vercel preview: [https://skill-deploy-mgq84nbtnb-codex-agent-deploys.vercel.app](https://skill-deploy-mgq84nbtnb-codex-agent-deploys.vercel.app)
